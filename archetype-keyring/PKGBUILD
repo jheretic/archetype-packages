@@ -1,0 +1,28 @@
+# Maintainer: Josh Heretic <josh[at]archetype[dot]li>
+
+# Based on manjaro-keyring; maintainer credits:
+# Philip Müller <philm[at]manjaro[dot]org>
+# Bernhard Landauer <bernhard[at]manjaro[dot]org>
+
+pkgname=archetype-keyring
+pkgver=20220820
+pkgrel=1
+pkgdesc="Archetype PGP keyring"
+arch=('any')
+url="https://archetype.li"
+license=('GPL')
+groups=('base-devel')
+depends=('pacman')
+install="${pkgname}.install"
+source=('Makefile'
+        'archetype.gpg'
+        'archetype-revoked'
+        'archetype-trusted')
+sha256sums=('5fb38900f4eefb012f6074ac713520c2242d9a610b07c54bdb68bee71643376d'
+            '5745a69542ecdf4b63330d8d48230466c501847bb334253ab13b42da530ff87f'
+            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+            '521f9fd656157b4b702dfd569ca885da2495ba8e00e93a88796e92b5bb4df776')
+
+package() {
+  make DESTDIR="${pkgdir}" install
+}
