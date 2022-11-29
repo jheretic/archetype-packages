@@ -5,7 +5,7 @@
 # Bernhard Landauer <bernhard[at]manjaro[dot]org>
 
 pkgname=archetype-keyring
-pkgver=20220820
+pkgver=20221128
 pkgrel=1
 pkgdesc="Archetype PGP keyring"
 arch=('any')
