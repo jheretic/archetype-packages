@@ -1,0 +1,64 @@
+# Maintainer: Josh King <josh@throneless.tech>
+
+# Built from a pinned git commit while miz is pre-release. Switch source to a
+# release tarball (and drop the -git build deps / pkgver git-describe) once miz
+# tags versions. Package is named `miz` (not `miz-git`) deliberately: this is an
+# internal distro package, the name must stay stable across the git->tag
+# transition, and pkgver() still encodes the commit so upgrades order correctly.
+
+pkgname=miz
+pkgver=0.1.0.r24.g945869048f39
+pkgrel=1
+pkgdesc='Package and update manager for the Archetype Linux distribution'
+arch=('x86_64')
+url='https://github.com/jheretic/miz'
+license=('GPL-2.0-or-later')
+depends=('pacman' 'gpgme')
+makedepends=('cargo' 'git')
+# Pinned commit. Bump _commit to advance the package.
+_commit='945869048f391bf81e320d6a810e4566426c13fd'
+source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/miz"
+  # 0.1.0.r<count>.g<shortsha>; base version tracks crates/miz Cargo.toml.
+  local base
+  base="$(sed -n 's/^version *= *"\(.*\)"/\1/p' crates/miz/Cargo.toml | head -1)"
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=12 HEAD)"
+}
+
+prepare() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release -p miz
+}
+
+check() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  # Non-ignored tests only; the integration suite is #[ignore]-gated on a live
+  # libalpm/sysupdated environment that a makepkg chroot does not provide.
+  cargo test --frozen --release -p miz
+}
+
+package() {
+  cd "$srcdir/miz"
+  install -Dm755 "target/release/miz" "$pkgdir/usr/bin/miz"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  # Manpages emitted by build.rs into OUT_DIR (miz.1 + miz-<sub>.1).
+  local manpage
+  for manpage in target/release/build/miz-*/out/*.1; do
+    [ -f "$manpage" ] || continue
+    install -Dm644 "$manpage" "$pkgdir/usr/share/man/man1/$(basename "$manpage")"
+  done
+}

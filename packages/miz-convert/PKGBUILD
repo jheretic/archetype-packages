@@ -1,0 +1,52 @@
+# Maintainer: Josh King <josh@throneless.tech>
+
+# Built from a pinned git commit while miz is pre-release; see packages/miz for
+# the naming/source rationale. Same _commit pin as miz — bump both together.
+
+pkgname=miz-convert
+pkgver=0.1.0.r24.g945869048f39
+pkgrel=1
+pkgdesc='Convert pacman.conf to miz.toml'
+arch=('x86_64')
+url='https://github.com/jheretic/miz'
+license=('GPL-2.0-or-later')
+depends=('pacman')   # pacman-conf binary at runtime; pacmanconf crate shells out
+makedepends=('cargo' 'git')
+_commit='945869048f391bf81e320d6a810e4566426c13fd'
+source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/miz"
+  local base
+  base="$(sed -n 's/^version *= *"\(.*\)"/\1/p' crates/miz-convert/Cargo.toml | head -1)"
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=12 HEAD)"
+}
+
+prepare() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release -p miz-convert
+}
+
+check() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  # miz-config is pure Rust; miz-convert's tests shell out to pacman-conf,
+  # available in the build chroot (we depend on pacman).
+  cargo test --frozen --release -p miz-config
+  cargo test --frozen --release -p miz-convert -- --include-ignored
+}
+
+package() {
+  cd "$srcdir/miz"
+  install -Dm755 "target/release/miz-convert" "$pkgdir/usr/bin/miz-convert"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
