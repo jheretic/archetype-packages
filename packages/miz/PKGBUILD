@@ -14,7 +14,7 @@ arch=('x86_64')
 url='https://github.com/jheretic/miz'
 license=('GPL-2.0-or-later')
 depends=('pacman' 'gpgme')
-makedepends=('cargo' 'git')
+makedepends=('cargo' 'git' 'pkgconf')
 # Pinned commit. Bump _commit to advance the package.
 _commit='945869048f391bf81e320d6a810e4566426c13fd'
 source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
