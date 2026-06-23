@@ -1,0 +1,38 @@
+# Default miz configuration for Archetype Linux.
+#
+# miz reads ONLY this file (/etc/miz.toml); it does not fall back to
+# pacman.conf. The [archetype] repository is appended at image-build time by
+# archetype-build's mkosi.postinst, pinned to the build's package date -- the
+# same way /etc/pacman.conf gets its [archetype] entry. Keep [options] and the
+# core/extra repos here; do not hardcode [archetype] (its Server is per-build).
+#
+# Schema reference: miz's crates/miz/examples/miz.toml. Unknown keys are
+# ignored for forward compatibility.
+
+[options]
+# pacman stays installed because miz dynamically links libalpm.so (shipped by
+# the pacman package). Hold it so it is never auto-removed.
+hold_pkg = ["pacman"]
+architecture = ["auto"]
+
+# Verify signatures by default; the archetype keyring is populated at build
+# time. Matches the image's /etc/pacman.conf SigLevel.
+sig_level = ["Required", "DatabaseOptional"]
+local_file_sig_level = ["Optional"]
+remote_file_sig_level = ["Required"]
+
+parallel_downloads = 5
+check_space = true
+
+# ---- repositories ----
+# Order matters: first match wins. mkosi.postinst appends [archetype] after
+# these (matching how it appends [archetype] to the end of pacman.conf), so
+# core/extra take precedence -- archetype only supplies packages Arch doesn't.
+
+[[repos]]
+name = "core"
+servers = ["https://geo.mirror.pkgbuild.com/$repo/os/$arch"]
+
+[[repos]]
+name = "extra"
+servers = ["https://geo.mirror.pkgbuild.com/$repo/os/$arch"]

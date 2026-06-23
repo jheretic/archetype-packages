@@ -15,10 +15,18 @@ url='https://github.com/jheretic/miz'
 license=('GPL-2.0-or-later')
 depends=('pacman' 'gpgme')
 makedepends=('cargo' 'git' 'pkgconf')
+# /etc/miz.toml is a config file (and gets [archetype] appended at image-build
+# time); treat it as a backup file so upgrades don't clobber local changes.
+backup=('etc/miz.toml')
 # Pinned commit. Bump _commit to advance the package.
 _commit='945869048f391bf81e320d6a810e4566426c13fd'
-source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
-sha256sums=('SKIP')
+source=("git+https://github.com/jheretic/miz.git#commit=${_commit}"
+        'miz.toml')
+# SKIP for both: the git source is commit-pinned, and miz.toml is a local file
+# version-controlled alongside this PKGBUILD (no fetched-artifact integrity
+# concern, and a fixed sum would need bumping on every edit).
+sha256sums=('SKIP'
+            'SKIP')
 
 pkgver() {
   cd "$srcdir/miz"
@@ -54,6 +62,11 @@ package() {
   install -Dm755 "target/release/miz" "$pkgdir/usr/bin/miz"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  # Default Archetype miz config. miz reads only /etc/miz.toml (no pacman.conf
+  # fallback), so without this miz is non-functional. The [archetype] repo is
+  # appended at image-build time by archetype-build's mkosi.postinst.
+  install -Dm644 "$srcdir/miz.toml" "$pkgdir/etc/miz.toml"
 
   # Manpages emitted by build.rs into OUT_DIR (miz.1 + miz-<sub>.1).
   local manpage
