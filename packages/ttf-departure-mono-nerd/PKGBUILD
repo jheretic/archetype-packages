@@ -1,0 +1,28 @@
+# Maintainer: Josh King <josh@throneless.tech>
+
+# Departure Mono, patched by the Nerd Fonts project. Modeled on Arch's
+# ttf-nerd-fonts-symbols / the per-font ttf-*-nerd packages: pull the patched
+# release tarball from the nerd-fonts GitHub release and install the fonts to
+# /usr/share/fonts/. Despite the conventional ttf- name prefix, the upstream
+# ships OTF files.
+pkgname=ttf-departure-mono-nerd
+pkgver=3.4.0
+pkgrel=1
+pkgdesc='Departure Mono font, patched with Nerd Fonts glyphs'
+arch=('any')
+url='https://github.com/ryanoasis/nerd-fonts'
+license=('OFL-1.1')
+groups=('nerd-fonts')
+provides=('ttf-font' 'nerd-fonts')
+makedepends=()
+source=("DepartureMono-${pkgver}.tar.xz::https://github.com/ryanoasis/nerd-fonts/releases/download/v${pkgver}/DepartureMono.tar.xz")
+sha256sums=('f099f71bc240fb59ffeaba50d26206b32df7e54051e49d6837a1702e4d3b4f3f')
+
+package() {
+  # Tarball is flat (no top-level dir): font OTFs + LICENSE + README.
+  install -dm755 "${pkgdir}/usr/share/fonts/${pkgname}"
+  install -m644 "${srcdir}"/*.otf "${pkgdir}/usr/share/fonts/${pkgname}/"
+
+  install -Dm644 "${srcdir}/LICENSE" \
+    "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
