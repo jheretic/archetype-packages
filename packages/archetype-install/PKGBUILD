@@ -1,0 +1,62 @@
+# Maintainer: Josh King <josh@throneless.tech>
+
+# Built from a pinned git commit while archetype-install is pre-release. Switch
+# source to a release tarball (and drop the -git build deps / pkgver
+# git-describe) once it tags versions. Package is named `archetype-install`
+# (not `-git`) deliberately: this is an internal distro package, the name must
+# stay stable across the git->tag transition, and pkgver() still encodes the
+# commit so upgrades order correctly.
+
+pkgname=archetype-install
+pkgver=0.1.0.r8.g854ed19264f1
+pkgrel=1
+pkgdesc='Interactive TUI installer for Archetype Linux'
+arch=('x86_64')
+url='https://github.com/jheretic/archetype-install'
+license=('AGPL-3.0-only')
+# Runtime delegates all privileged work to external tools: systemd-repart and
+# systemd-tmpfiles (systemd), lsblk/findmnt (util-linux), systemctl reboot.
+depends=('systemd' 'util-linux')
+makedepends=('cargo' 'git')
+# Pinned commit. Bump _commit to advance the package.
+_commit='854ed19264f1200911dcb487dd78e07181c67fcc'
+source=("git+https://github.com/jheretic/archetype-install.git#commit=${_commit}")
+# SKIP: the git source is commit-pinned, so there is no fetched-artifact
+# integrity concern a fixed checksum would add.
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/archetype-install"
+  # 0.1.0.r<count>.g<shortsha>; base version tracks Cargo.toml.
+  local base
+  base="$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=12 HEAD)"
+}
+
+prepare() {
+  cd "$srcdir/archetype-install"
+  export CARGO_HOME="$srcdir/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$srcdir/archetype-install"
+  export CARGO_HOME="$srcdir/cargo-home"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release
+}
+
+check() {
+  cd "$srcdir/archetype-install"
+  export CARGO_HOME="$srcdir/cargo-home"
+  # Unit tests are pure (layout math + the embedded-template fallback); they
+  # need no live disk, repart, or root, so they run in a makepkg chroot.
+  cargo test --frozen --release
+}
+
+package() {
+  cd "$srcdir/archetype-install"
+  install -Dm755 "target/release/archetype-install" "$pkgdir/usr/bin/archetype-install"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
