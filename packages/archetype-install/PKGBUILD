@@ -8,7 +8,7 @@
 # commit so upgrades order correctly.
 
 pkgname=archetype-install
-pkgver=0.1.0.r22.g5171071ae215
+pkgver=0.1.0.r25.g1e328e74c3f8
 pkgrel=1
 pkgdesc='Interactive TUI installer for Archetype Linux'
 arch=('x86_64')
@@ -19,7 +19,7 @@ license=('AGPL-3.0-only')
 depends=('systemd' 'util-linux')
 makedepends=('cargo' 'git')
 # Pinned commit. Bump _commit to advance the package.
-_commit='5171071ae215ccf351cac0416d2aa9f62929483b'
+_commit='1e328e74c3f860afabceecc975fd712afc0e5844'
 source=("git+https://github.com/jheretic/archetype-install.git#commit=${_commit}")
 # SKIP: the git source is commit-pinned, so there is no fetched-artifact
 # integrity concern a fixed checksum would add.
