@@ -1,31 +1,25 @@
-# Make archetype-spinner the default Plymouth theme by writing Theme= into
+# Make archetype-spinner the default Plymouth theme by writing
 # /etc/plymouth/plymouthd.conf, which plymouthd reads ahead of
-# /usr/share/plymouth/plymouthd.defaults (Theme=bgrt). We write the file
-# directly rather than via `plymouth-set-default-theme` because that wrapper
-# probes the runtime environment -- notably `plymouth --get-splash-plugin-path`
-# and a theme-plugin existence check -- which fail in a bare build/initrd chroot
-# (no running plymouthd/D-Bus), causing it to exit non-zero WITHOUT writing the
-# config. That silent failure is why the initrd booted the stock bgrt theme. A
-# plain write has no runtime dependency, so it works in the image build, the
-# default-initrd build (InitrdPackages=), and on a live installed system.
+# /usr/share/plymouth/plymouthd.defaults (Theme=bgrt).
 #
-# We do not (cannot) ship this file in the package: plymouth owns
-# /etc/plymouth/plymouthd.conf, so packaging it would conflict. A scriptlet may
-# freely modify another package's file.
+# We write the file rather than use `plymouth-set-default-theme`: that wrapper
+# probes the runtime (plymouth --get-splash-plugin-path + a plugin-existence
+# check) and exits non-zero WITHOUT writing the config in a bare build/initrd
+# chroot (no running plymouthd/D-Bus). We do not (cannot) SHIP the file either:
+# plymouth owns /etc/plymouth/plymouthd.conf, so packaging it would conflict.
+# A scriptlet may freely overwrite another package's file.
+#
+# We OVERWRITE the whole file (not edit-in-place). The previous version tried to
+# insert `Theme=` under an existing [Daemon] header with
+# `sed '0,/^\[Daemon\]/s//.../'`; that empty-regex address-reuse idiom is NOT
+# portable across sed implementations and silently no-op'd in the initrd build,
+# leaving a bare `[Daemon]` with no Theme -> the boot splash fell back to bgrt.
+# The stock file is only commented defaults, so clobbering it loses nothing; a
+# fixed two-line body has zero parsing fragility and is fully idempotent.
 
 _set_default_theme() {
-	local conf="etc/plymouth/plymouthd.conf"
 	mkdir -p etc/plymouth
-	# Drop any existing Theme= line, then set ours under [Daemon]. Create the
-	# file with the section header if it doesn't exist yet.
-	if [ -f "$conf" ]; then
-		sed -i '/^[[:space:]]*Theme[[:space:]]*=/d' "$conf"
-	fi
-	if ! grep -q '^\[Daemon\]' "$conf" 2>/dev/null; then
-		printf '[Daemon]\n' >> "$conf"
-	fi
-	# Append under the [Daemon] section header.
-	sed -i '0,/^\[Daemon\]/s//[Daemon]\nTheme=archetype-spinner/' "$conf"
+	printf '[Daemon]\nTheme=archetype-spinner\n' > etc/plymouth/plymouthd.conf
 }
 
 post_install() {
