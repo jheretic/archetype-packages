@@ -7,7 +7,7 @@
 # transition, and pkgver() still encodes the commit so upgrades order correctly.
 
 pkgname=miz
-pkgver=0.1.0.r35.g2f686ccddf0d
+pkgver=0.1.0.r37.g94cd210b85d6
 pkgrel=1
 pkgdesc='Package and update manager for the Archetype Linux distribution'
 arch=('x86_64')
@@ -19,7 +19,7 @@ makedepends=('cargo' 'git' 'pkgconf')
 # time); treat it as a backup file so upgrades don't clobber local changes.
 backup=('etc/miz.toml')
 # Pinned commit. Bump _commit to advance the package.
-_commit='2f686ccddf0d503f66ed5df7b5af784f26b91405'
+_commit='94cd210b85d6f38f469550ca43c72b50df30585c'
 source=("git+https://github.com/jheretic/miz.git#commit=${_commit}"
         'miz.toml')
 # SKIP for both: the git source is commit-pinned, and miz.toml is a local file
