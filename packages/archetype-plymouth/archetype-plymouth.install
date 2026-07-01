@@ -1,0 +1,13 @@
+post_install() {
+	# Make archetype-spinner the default Plymouth theme. This writes
+	# Theme=archetype-spinner into /etc/plymouth/plymouthd.conf, which plymouthd
+	# reads ahead of /usr/share/plymouth/plymouthd.defaults (Theme=bgrt) -- the
+	# only reliable way to beat the packaged bgrt default without file-conflicting
+	# on plymouth's own plymouthd.conf/plymouthd.defaults. The theme itself is
+	# shipped by this package under /usr/share/plymouth/themes/archetype-spinner.
+	usr/bin/plymouth-set-default-theme archetype-spinner || true
+}
+
+post_upgrade() {
+	post_install "$@"
+}
