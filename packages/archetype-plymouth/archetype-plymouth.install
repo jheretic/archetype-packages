@@ -1,13 +1,37 @@
+# Make archetype-spinner the default Plymouth theme by writing Theme= into
+# /etc/plymouth/plymouthd.conf, which plymouthd reads ahead of
+# /usr/share/plymouth/plymouthd.defaults (Theme=bgrt). We write the file
+# directly rather than via `plymouth-set-default-theme` because that wrapper
+# probes the runtime environment -- notably `plymouth --get-splash-plugin-path`
+# and a theme-plugin existence check -- which fail in a bare build/initrd chroot
+# (no running plymouthd/D-Bus), causing it to exit non-zero WITHOUT writing the
+# config. That silent failure is why the initrd booted the stock bgrt theme. A
+# plain write has no runtime dependency, so it works in the image build, the
+# default-initrd build (InitrdPackages=), and on a live installed system.
+#
+# We do not (cannot) ship this file in the package: plymouth owns
+# /etc/plymouth/plymouthd.conf, so packaging it would conflict. A scriptlet may
+# freely modify another package's file.
+
+_set_default_theme() {
+	local conf="etc/plymouth/plymouthd.conf"
+	mkdir -p etc/plymouth
+	# Drop any existing Theme= line, then set ours under [Daemon]. Create the
+	# file with the section header if it doesn't exist yet.
+	if [ -f "$conf" ]; then
+		sed -i '/^[[:space:]]*Theme[[:space:]]*=/d' "$conf"
+	fi
+	if ! grep -q '^\[Daemon\]' "$conf" 2>/dev/null; then
+		printf '[Daemon]\n' >> "$conf"
+	fi
+	# Append under the [Daemon] section header.
+	sed -i '0,/^\[Daemon\]/s//[Daemon]\nTheme=archetype-spinner/' "$conf"
+}
+
 post_install() {
-	# Make archetype-spinner the default Plymouth theme. This writes
-	# Theme=archetype-spinner into /etc/plymouth/plymouthd.conf, which plymouthd
-	# reads ahead of /usr/share/plymouth/plymouthd.defaults (Theme=bgrt) -- the
-	# only reliable way to beat the packaged bgrt default without file-conflicting
-	# on plymouth's own plymouthd.conf/plymouthd.defaults. The theme itself is
-	# shipped by this package under /usr/share/plymouth/themes/archetype-spinner.
-	usr/bin/plymouth-set-default-theme archetype-spinner || true
+	_set_default_theme
 }
 
 post_upgrade() {
-	post_install "$@"
+	_set_default_theme
 }
