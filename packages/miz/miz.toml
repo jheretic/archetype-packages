@@ -1,10 +1,13 @@
-# Default miz configuration for Archetype Linux.
+# Default miz VENDOR configuration for Archetype Linux.
 #
-# miz reads ONLY this file (/etc/miz.toml); it does not fall back to
-# pacman.conf. The [archetype] repository is appended at image-build time by
-# archetype-build's mkosi.postinst, pinned to the build's package date -- the
-# same way /etc/pacman.conf gets its [archetype] entry. Keep [options] and the
-# core/extra repos here; do not hardcode [archetype] (its Server is per-build).
+# This file ships in the immutable /usr at /usr/lib/miz/miz.toml. miz loads it
+# as the base layer and merges an OPTIONAL user override at /etc/miz.toml on top
+# (user keys win per-key; [[repos]] merge by name). It does not fall back to
+# pacman.conf. The [archetype] repository + date-pinned archive servers are
+# baked into this file at image-build time by archetype-build's mkosi.postinst,
+# pinned to the build's package date. Carrying repos in /usr (not /etc) lets an
+# A/B update bring matching repos automatically: the -Iu relay mounts the new
+# /usr into the root snapshot, so -Syu resolves against the new version's repos.
 #
 # Schema reference: miz's crates/miz/examples/miz.toml. Unknown keys are
 # ignored for forward compatibility.
