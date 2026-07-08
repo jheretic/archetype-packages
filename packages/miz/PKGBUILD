@@ -7,7 +7,7 @@
 # transition, and pkgver() still encodes the commit so upgrades order correctly.
 
 pkgname=miz
-pkgver=0.1.0.r49.g710d7fade8d3
+pkgver=0.1.0.r50.gdc5c60057123
 pkgrel=1
 pkgdesc='Package and update manager for the Archetype Linux distribution'
 arch=('x86_64')
@@ -20,7 +20,7 @@ makedepends=('cargo' 'git' 'pkgconf')
 # which miz merges on top of the vendor base -- so the vendor file can be
 # replaced freely on upgrade without clobbering local changes.
 # Pinned commit. Bump _commit to advance the package.
-_commit='710d7fade8d3c803f5e24652453d503f7cd507dc'
+_commit='dc5c6005712308dad789c6bdd738df87134d7136'
 source=("git+https://github.com/jheretic/miz.git#commit=${_commit}"
         'miz.toml')
 # SKIP for both: the git source is commit-pinned, and miz.toml is a local file
