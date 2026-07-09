@@ -27,6 +27,11 @@ remote_file_sig_level = ["Required"]
 parallel_downloads = 5
 check_space = true
 
+# Colorize output by default on Archetype. miz's built-in default is off (a bare
+# miz.toml stays uncolored); this vendor config turns it on. Respects NO_COLOR
+# and only applies when the output is a TTY.
+color = true
+
 # ---- repositories ----
 # Order matters: first match wins. mkosi.postinst appends [archetype] after
 # these (matching how it appends [archetype] to the end of pacman.conf), so
