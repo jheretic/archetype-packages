@@ -4,7 +4,7 @@
 # the naming/source rationale. Same _commit pin as miz — bump both together.
 
 pkgname=miz-convert
-pkgver=0.1.0.r24.g945869048f39
+pkgver=0.1.0.r56.gccb122110555
 pkgrel=1
 pkgdesc='Convert pacman.conf to miz.toml'
 arch=('x86_64')
@@ -12,7 +12,7 @@ url='https://github.com/jheretic/miz'
 license=('GPL-2.0-or-later')
 depends=('pacman')   # pacman-conf binary at runtime; pacmanconf crate shells out
 makedepends=('cargo' 'git' 'pkgconf')
-_commit='945869048f391bf81e320d6a810e4566426c13fd'
+_commit='ccb1221105554ceae455f80ed436f907ccc9e659'
 source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
 sha256sums=('SKIP')
 
