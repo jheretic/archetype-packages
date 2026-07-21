@@ -18,10 +18,15 @@ case "$PKG" in
   miz)
     SRC_DEFAULT="$HOME/src/archetype/miz"
     CARGO_TOML="crates/miz/Cargo.toml"   # workspace member, per miz's pkgver()
+    # The miz workspace ships three commit-locked packages built from the SAME
+    # git commit; bump them together so they never drift (miz-convert has
+    # drifted once before when bumped by hand).
+    PKGS=(miz miz-convert mizd)
     ;;
   archetype-install)
     SRC_DEFAULT="$HOME/src/archetype/archetype-install"
     CARGO_TOML="Cargo.toml"
+    PKGS=(archetype-install)
     ;;
   *)
     echo "usage: $0 <miz|archetype-install> [--source-dir PATH]" >&2
@@ -35,11 +40,13 @@ if [ "${2:-}" = "--source-dir" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PKGBUILD="$SCRIPT_DIR/../packages/$PKG/PKGBUILD"
 
 [ -d "$SRC/.git" ] || { echo "bump-pin: $SRC is not a git repo" >&2; exit 1; }
-[ -f "$PKGBUILD" ]  || { echo "bump-pin: no PKGBUILD at $PKGBUILD" >&2; exit 1; }
 [ -f "$SRC/$CARGO_TOML" ] || { echo "bump-pin: no $CARGO_TOML in $SRC" >&2; exit 1; }
+for p in "${PKGS[@]}"; do
+  [ -f "$SCRIPT_DIR/../packages/$p/PKGBUILD" ] || {
+    echo "bump-pin: no PKGBUILD at packages/$p/PKGBUILD" >&2; exit 1; }
+done
 
 commit="$(git -C "$SRC" rev-parse HEAD)"
 short12="$(git -C "$SRC" rev-parse --short=12 HEAD)"
@@ -66,14 +73,16 @@ if git -C "$SRC" ls-remote --exit-code origin >/dev/null 2>&1; then
   fi
 fi
 
-# Rewrite the two anchored lines in place.
-tmp="$(mktemp)"
-sed -E \
-  -e "s|^_commit=.*|_commit='${commit}'|" \
-  -e "s|^pkgver=.*|pkgver=${pkgver}|" \
-  "$PKGBUILD" >"$tmp"
-mv "$tmp" "$PKGBUILD"
-
-echo "bumped $PKG: _commit=${commit}"
-echo "             pkgver=${pkgver}"
-echo "(commit the PKGBUILD change in archetype-packages.)"
+# Rewrite the two anchored lines in place, for every sibling package sharing
+# this commit.
+for p in "${PKGS[@]}"; do
+  pb="$SCRIPT_DIR/../packages/$p/PKGBUILD"
+  tmp="$(mktemp)"
+  sed -E \
+    -e "s|^_commit=.*|_commit='${commit}'|" \
+    -e "s|^pkgver=.*|pkgver=${pkgver}|" \
+    "$pb" >"$tmp"
+  mv "$tmp" "$pb"
+  echo "bumped $p: _commit=${commit} pkgver=${pkgver}"
+done
+echo "(commit the PKGBUILD change(s) in archetype-packages.)"
