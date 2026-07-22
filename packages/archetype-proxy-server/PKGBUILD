@@ -90,11 +90,19 @@ _LIBCLANG18_DIR="/usr/lib/llvm18/lib"
 
 pkgver() {
   cd "${srcdir}/${_pkgname}"
-  # 0.1.0.r<commits>.g<shorthash>; falls back gracefully if no tags exist.
-  ( git describe --long --tags 2>/dev/null \
-      | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ) \
-    || printf "0.1.0.r%s.g%s" \
-         "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  # 0.1.0.r<commits>.g<shorthash>; falls back to a commit-count version when no
+  # tags exist. Test the captured string for emptiness -- do NOT chain the
+  # fallback with `|| ...` off the pipeline: a pipeline's exit status is that of
+  # its LAST command (sed), which succeeds (0) on empty input even when
+  # `git describe` found no tag, so `||` never fires and pkgver() prints "".
+  local desc
+  desc=$(git describe --long --tags 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g')
+  if [[ -n "${desc}" ]]; then
+    printf '%s' "${desc}"
+  else
+    printf '0.1.0.r%s.g%s' \
+      "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  fi
 }
 
 prepare() {
