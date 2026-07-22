@@ -1,0 +1,83 @@
+# Maintainer: Josh King <josh@throneless.tech>
+
+# Built from a pinned git commit while miz is pre-release; see packages/miz for
+# the naming/source rationale. Same _commit pin as miz/miz-convert — bump all
+# together. mizd is the D-Bus daemon exposing miz's layered-package operations
+# (org.archetype.miz1) so a graphical software center can query + trigger
+# installs/updates; it is D-Bus activated (not always running).
+
+pkgname=mizd
+# NOTE: this pin is a PLACEHOLDER. mizd (and crates/mizd/data/) did not exist at
+# the miz/miz-convert pin e8135f0 — it was added by the mizd commits that are not
+# yet pushed. Before this package can build, bump ALL THREE (miz, miz-convert,
+# mizd) to a PUSHED miz commit that contains crates/mizd via
+# `scripts/bump-pin.sh miz` (it now bumps the trio together). Until then, this
+# _commit/pkgver intentionally does NOT point at a real mizd-bearing commit.
+pkgver=0.0.0.r0.gPLACEHOLDER
+pkgrel=1
+pkgdesc='D-Bus daemon for miz layered-package operations (org.archetype.miz1)'
+arch=('x86_64')
+url='https://github.com/jheretic/miz'
+license=('GPL-2.0-or-later')
+# Runtime: pacman/gpgme (libalpm via miz-core), polkit (authorization),
+# dbus + systemd (activation) are part of the base system.
+depends=('pacman' 'gpgme' 'polkit')
+makedepends=('cargo' 'git' 'pkgconf')
+# Pinned commit. Bump with miz/miz-convert via scripts/bump-pin.sh miz.
+_commit='PLACEHOLDER_bump_to_a_pushed_mizd_bearing_commit'
+source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/miz"
+  # 0.1.0.r<count>.g<shortsha>; base version tracks crates/miz Cargo.toml
+  # (the workspace shares one version).
+  local base
+  base="$(sed -n 's/^version *= *"\(.*\)"/\1/p' crates/miz/Cargo.toml | head -1)"
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=12 HEAD)"
+}
+
+prepare() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release -p mizd
+}
+
+check() {
+  cd "$srcdir/miz"
+  export CARGO_HOME="$srcdir/cargo-home"
+  # Non-ignored tests only; the daemon's alpm/polkit/system-bus paths are
+  # VM-validation-only (a makepkg chroot has neither a real libalpm target
+  # state, polkit daemon, nor a privileged system bus).
+  cargo test --frozen --release -p mizd
+}
+
+package() {
+  cd "$srcdir/miz"
+  install -Dm755 "target/release/mizd" "$pkgdir/usr/bin/mizd"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # D-Bus + polkit + systemd integration (shipped in the repo at
+  # crates/mizd/data/, so they come from the pinned git source).
+  local data="crates/mizd/data"
+  # polkit actions (refresh = allow_active; install = auth_admin_keep).
+  install -Dm644 "$data/org.archetype.miz1.policy" \
+    "$pkgdir/usr/share/polkit-1/actions/org.archetype.miz1.policy"
+  # System-bus policy: root owns the name, any user may call (per-method
+  # authorization is enforced by polkit inside the daemon).
+  install -Dm644 "$data/org.archetype.miz1.conf" \
+    "$pkgdir/usr/share/dbus-1/system.d/org.archetype.miz1.conf"
+  # D-Bus activation -> systemd.
+  install -Dm644 "$data/org.archetype.miz1.service" \
+    "$pkgdir/usr/share/dbus-1/system-services/org.archetype.miz1.service"
+  # systemd service unit (Type=dbus, D-Bus activated, runs as root).
+  install -Dm644 "$data/mizd.service" \
+    "$pkgdir/usr/lib/systemd/system/mizd.service"
+}
