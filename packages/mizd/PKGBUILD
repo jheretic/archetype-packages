@@ -7,13 +7,7 @@
 # installs/updates; it is D-Bus activated (not always running).
 
 pkgname=mizd
-# NOTE: this pin is a PLACEHOLDER. mizd (and crates/mizd/data/) did not exist at
-# the miz/miz-convert pin e8135f0 — it was added by the mizd commits that are not
-# yet pushed. Before this package can build, bump ALL THREE (miz, miz-convert,
-# mizd) to a PUSHED miz commit that contains crates/mizd via
-# `scripts/bump-pin.sh miz` (it now bumps the trio together). Until then, this
-# _commit/pkgver intentionally does NOT point at a real mizd-bearing commit.
-pkgver=0.0.0.r0.gPLACEHOLDER
+pkgver=0.1.0.r68.gd0599621c789
 pkgrel=1
 pkgdesc='D-Bus daemon for miz layered-package operations (org.archetype.miz1)'
 arch=('x86_64')
@@ -24,7 +18,7 @@ license=('GPL-2.0-or-later')
 depends=('pacman' 'gpgme' 'polkit')
 makedepends=('cargo' 'git' 'pkgconf')
 # Pinned commit. Bump with miz/miz-convert via scripts/bump-pin.sh miz.
-_commit='PLACEHOLDER_bump_to_a_pushed_mizd_bearing_commit'
+_commit='d0599621c789b66813b249c8fdd44545e6b00f7c'
 source=("git+https://github.com/jheretic/miz.git#commit=${_commit}")
 sha256sums=('SKIP')
 
