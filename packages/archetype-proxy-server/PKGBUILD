@@ -127,6 +127,8 @@ build() {
   # (2) clang as the C/C++ compiler for the aws-lc-fips FIPS delocate step:
   export CC=/usr/lib/llvm18/bin/clang
   export CXX=/usr/lib/llvm18/bin/clang++
+  export CFLAGS="${CFLAGS} -fplt"
+  export CXXFLAGS="${CXXFLAGS} -fplt"
   # (3) Go toolchain for aws-lc-fips (provided by the `go` makedepend; on PATH).
 
   export CARGO_HOME="${srcdir}/cargo-home"
